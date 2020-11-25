@@ -1,3 +1,0 @@
-https://github.com/opencv/opencv
-https://docs.opencv.org/master/d3/d52/tutorial_windows_install.html
-https://cmake.org/download/
