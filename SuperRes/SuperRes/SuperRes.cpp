@@ -88,8 +88,8 @@ int main(int argc, const char* argv[])
 	const int iterations = 10;
 	const int scale = 2;
 	const int temporalAreaRadius = 4;
-	const string optFlow = "farneback";
-	string gpuOption = "fals";
+	const string optFlow = "tvl1";
+	string gpuOption = "cuda";
 
 
 
