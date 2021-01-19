@@ -122,7 +122,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)OpenCV\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core3410d.lib;opencv_cudaoptflow3410d.lib;opencv_highgui3410d.lib;opencv_superres3410d.lib;opencv_video3410d.lib;opencv_videoio3410d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core3410d.lib;opencv_cudaoptflow3410d.lib;opencv_highgui3410d.lib;opencv_superres3410d.lib;opencv_video3410d.lib;opencv_videoio3410d.lib;opencv_imgcodecs3410d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,7 +141,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)OpenCV\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core3410d.lib;opencv_cudaoptflow3410d.lib;opencv_highgui3410d.lib;opencv_superres3410d.lib;opencv_video3410d.lib;opencv_videoio3410d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core3410d.lib;opencv_cudaoptflow3410d.lib;opencv_highgui3410d.lib;opencv_superres3410d.lib;opencv_video3410d.lib;opencv_videoio3410d.lib;opencv_imgcodecs3410d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
