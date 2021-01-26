@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <string>
 #include <ctype.h>
+#include <fstream>
+#include <direct.h>
 
 #include "opencv2/core/core.hpp"
 //#include "opencv2/core/cuda/utility.hpp"
@@ -24,7 +26,12 @@ using namespace cv::superres;
         op; \
         tm.stop(); \
         cout << tm.getTimeSec() << " sec" << endl; \
+		file << tm.getTimeSec() << " sec" << endl; \
     }
+
+void extract_frames(const string& videoFilePath, vector<Mat>& frames);
+void save_frames(vector<Mat>& frames, const string& outputDir);
+
 
 static Ptr<cv::superres::DenseOpticalFlowExt> createOptFlow(const string& name, bool useGpu)
 {
@@ -56,6 +63,7 @@ static Ptr<cv::superres::DenseOpticalFlowExt> createOptFlow(const string& name, 
 
 int main(int argc, const char* argv[])
 {
+
 	/*CommandLineParser cmd(argc, argv,
 		"{ v video      |           | Input video (mandatory)}"
 		"{ o output     |           | Output video }"
@@ -69,7 +77,7 @@ int main(int argc, const char* argv[])
 
 
 	//const string inputVideoName = cmd.get<string>("video");
-	const string inputVideoName = "planet.avi";
+
 	/*if (cmd.get<bool>("help") || inputVideoName.empty())
 	{
 		cout << "This sample demonstrates Super Resolution algorithms for video sequence" << endl;
@@ -84,14 +92,47 @@ int main(int argc, const char* argv[])
 	const string optFlow = cmd.get<string>("flow");
 	string gpuOption = cmd.get<string>("gpu");*/
 
-	const string outputVideoName = "planetResultTest.avi";
+	//Superres Param:
+	string inputVideoName = "planet.avi";
+	string outputVideoName = "planetSuperRez.avi";
 	const int iterations = 10;
 	const int scale = 2;
 	const int temporalAreaRadius = 4;
 	const string optFlow = "tvl1";
 	string gpuOption = "cuda";
 
+	//Create a file to write report
+	//fstream ("CompareFrames/outro.txt");
+	size_t lastindex = inputVideoName.find_last_of(".");
+	string rawVideoName = inputVideoName.substr(0, lastindex);
 
+	string sDirectoryPath = "CompareFrames/" + rawVideoName;
+	string sDirectoryPathBP = "CompareFrames/" + rawVideoName + "/beforeProcess";
+	string sDirectoryPathPP = "CompareFrames/" + rawVideoName + "/postProcess";
+
+
+	//Extract frames before Superres
+	vector<Mat> preProcessedFrames;
+	extract_frames(inputVideoName, preProcessedFrames);
+	//Manualy set output dir1
+	if (_mkdir(sDirectoryPath.c_str()) != 0)
+	{
+		cout << "Could not create folder for:" + rawVideoName << "or path already exists." << endl;
+	}
+	//Manualy set output dir2
+	if (_mkdir(sDirectoryPathBP.c_str()) != 0)
+	{
+		cout << "Could not create subfolder beforeProcessFrames for: " + rawVideoName << "or path already exists." << endl;
+	}
+	//save_frames(preProcessedFrames,)
+	save_frames(preProcessedFrames, sDirectoryPathBP + "/");
+
+	//Create Report file
+
+	string reportPath = "CompareFrames/" + rawVideoName;
+	ofstream file(reportPath + "/Report" + toUpperCase(optFlow) + toUpperCase(gpuOption) + ".txt");
+
+	//Start Superres
 
 	std::transform(gpuOption.begin(), gpuOption.end(), gpuOption.begin(), ::tolower);
 
@@ -141,7 +182,15 @@ int main(int argc, const char* argv[])
 		cout << "Temporal radius : " << temporalAreaRadius << endl;
 		cout << "Optical Flow    : " << optFlow << endl;
 		cout << "Mode            : " << (useCuda ? "CUDA" : "CPU") << endl;
+		file << "Input           : " << inputVideoName << " " << frame.size() << endl;
+		file << "Scale factor    : " << scale << endl;
+		file << "Iterations      : " << iterations << endl;
+		file << "Temporal radius : " << temporalAreaRadius << endl;
+		file << "Optical Flow    : " << optFlow << endl;
+		file << "Mode            : " << (useCuda ? "CUDA" : "CPU") << endl;
 	}
+
+
 
 	superRes->setInput(frameSource);
 
@@ -150,9 +199,11 @@ int main(int argc, const char* argv[])
 	for (int i = 0;; ++i)
 	{
 		cout << '[' << setw(3) << i << "] : " << flush;
+		file << '[' << setw(3) << i << "] : " << flush;
 		Mat result;
 
 		MEASURE_TIME(superRes->nextFrame(result));
+
 
 		//superRes->nextFrame(result);
 		if (result.empty())
@@ -170,6 +221,63 @@ int main(int argc, const char* argv[])
 			writer << result;
 		}
 	}
+	file.close();
+	writer.release();
+
+
+	//Extract frames after superres
+	vector<Mat> postProcessedFrames;
+	extract_frames(outputVideoName, postProcessedFrames);
+	//Manualy set output dir2
+	if (_mkdir(sDirectoryPathPP.c_str()) != 0)
+	{
+		cout << "Could not create subfolder afterProcessFrames for: " + outputVideoName << "or path already exists." << endl;
+	}
+	//save_frames(preProcessedFrames,)
+	save_frames(postProcessedFrames, sDirectoryPathPP + "/");
+
 
 	return 0;
+}
+
+void extract_frames(const string& videoFilePath, vector<Mat>& frames)
+{
+	try
+	{
+		//open the video file
+		VideoCapture cap(videoFilePath); // open the video file
+		if (!cap.isOpened())  // check if we succeeded
+			CV_Error(CV_StsError, "Can not open Video file");
+
+		//cap.get(CV_CAP_PROP_FRAME_COUNT) contains the number of frames in the video;
+		for (int frameNum = 0; frameNum < cap.get(CV_CAP_PROP_FRAME_COUNT); frameNum++)
+		{
+			Mat frame;
+			cap >> frame; // get the next frame from video
+			frames.push_back(frame);
+		}
+	}
+	catch (cv::Exception& e)
+	{
+		cerr << e.msg << endl;
+		exit(1);
+	}
+}
+
+void save_frames(vector<Mat>& frames, const string& outputDir)
+{
+	vector<int> compression_params;
+	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+	compression_params.push_back(100);
+
+	int frameNumber = 1;
+
+	for (std::vector<Mat>::iterator frame = frames.begin() + 1; frame != frames.end(); ++frame)
+	{
+		string filePath = outputDir + to_string(static_cast<long long>(frameNumber)) + ".jpg";
+		imwrite(filePath, *frame, compression_params);
+		frameNumber++;
+	}
+
+
 }
